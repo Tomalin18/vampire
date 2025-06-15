@@ -69,12 +69,12 @@ export interface Player {
 export interface Enemy {
   id: string;
   type: EnemyType;
-  health: number;
+    health: number;
   maxHealth: number;
   position: Vector2;
   velocity: Vector2;
-  damage: number;
-  speed: number;
+    damage: number;
+    speed: number;
   xpValue: number;
   size: number;
 }
@@ -117,7 +117,7 @@ export interface UpgradeEffect {
   type: 'weapon' | 'stat' | 'passive';
   weaponId?: string;
   statType?: string;
-  value: number;
+    value: number;
   isPercentage?: boolean;
 }
 
