@@ -46,22 +46,22 @@ export class MovementSystem implements System {
 
     const dx = movement.target.x - transform.x;
     const dy = movement.target.y - transform.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance > 5) { // Dead zone to prevent jittering
       // Normalize direction and apply speed
       const directionX = dx / distance;
       const directionY = dy / distance;
-      
+          
       movement.velocity.x = directionX * movement.speed;
       movement.velocity.y = directionY * movement.speed;
-    } else {
+        } else {
       // Close enough to target, stop moving
-      movement.velocity.x = 0;
-      movement.velocity.y = 0;
-      movement.target = undefined;
-    }
-  }
+          movement.velocity.x = 0;
+          movement.velocity.y = 0;
+          movement.target = undefined;
+        }
+      }
 
   private applyDamping(movement: Movement, deltaTime: number): void {
     const dampingFactor = 0.95; // Adjust for different feel

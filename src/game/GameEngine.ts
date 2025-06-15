@@ -15,7 +15,7 @@ export class GameEngine {
   private frameCount: number = 0;
   private fps: number = 0;
   private fpsUpdateTime: number = 0;
-
+  
   constructor() {
     this.lastTime = performance.now();
   }
@@ -98,7 +98,7 @@ export class GameEngine {
 
     // Clean up destroyed entities
     this.cleanupEntities();
-
+    
     // Continue the game loop
     requestAnimationFrame(this.gameLoop);
   };
@@ -148,7 +148,7 @@ export class GameEngine {
     this.entities.forEach(entity => {
       if (entity.components.has(componentType)) {
         result.push(entity);
-      }
+  }
     });
     return result;
   }
@@ -167,7 +167,7 @@ export class GameEngine {
         
         if (distance <= radius) {
           result.push(entity);
-        }
+  }
       }
     });
     

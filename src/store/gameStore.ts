@@ -49,20 +49,20 @@ const createInitialPlayer = (characterId: string): Player => {
   
   return {
     id: 'player',
-    level: 1,
-    experience: 0,
+  level: 1,
+  experience: 0,
     experienceToNext: GAME_CONFIG.BASE_XP_REQUIREMENT,
     health: character.baseStats.health,
     maxHealth: character.baseStats.health,
     position: { x: GAME_CONFIG.SCREEN_WIDTH / 2, y: GAME_CONFIG.SCREEN_HEIGHT / 2 },
-    stats: {
+  stats: {
       damage: character.baseStats.damage,
       attackSpeed: character.baseStats.attackSpeed,
       moveSpeed: character.baseStats.moveSpeed,
       health: character.baseStats.health,
       criticalChance: character.baseStats.criticalChance,
       criticalMultiplier: character.baseStats.criticalMultiplier,
-    },
+  },
   };
 };
 
@@ -121,7 +121,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       projectiles: [],
     });
   },
-  
+
   // Player Actions
   updatePlayerPosition: (x: number, y: number) => {
     set(state => ({
@@ -131,7 +131,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       },
     }));
   },
-  
+
   updatePlayerHealth: (health: number) => {
     set(state => ({
       player: {
@@ -140,7 +140,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       },
     }));
   },
-  
+
   gainExperience: (amount: number) => {
     set(state => {
       const newExperience = state.player.experience + amount;
@@ -168,11 +168,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
   },
-  
+
   levelUp: () => {
     set({ gameState: 'playing' });
   },
-  
+
   applyUpgrade: (upgrade: Upgrade) => {
     set(state => {
       const newPlayer = { ...state.player };
@@ -183,15 +183,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         
         if (upgrade.effect.isPercentage) {
           (newPlayer.stats as any)[statType] = currentValue * (1 + upgrade.effect.value);
-        } else {
+            } else {
           (newPlayer.stats as any)[statType] = currentValue + upgrade.effect.value;
-        }
+            }
         
         // Update max health if health stat is increased
         if (statType === 'health') {
           newPlayer.maxHealth = newPlayer.stats.health;
           newPlayer.health = Math.min(newPlayer.health, newPlayer.maxHealth);
-        }
+          }
       }
       
       return {
@@ -200,7 +200,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
   },
-  
+
   // Enemy Actions
   addEnemy: (enemy: Enemy) => {
     set(state => ({
@@ -224,7 +224,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       projectiles: [...state.projectiles, projectile],
     }));
   },
-  
+
   removeProjectile: (projectileId: string) => {
     set(state => ({
       projectiles: state.projectiles.filter(projectile => projectile.id !== projectileId),
@@ -251,26 +251,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ),
     }));
   },
-  
+
   // Game Progress
   incrementTime: () => {
     set(state => ({
       survivalTime: state.survivalTime + 1,
     }));
   },
-  
+
   incrementScore: (points: number) => {
     set(state => ({
       score: state.score + points,
     }));
   },
-  
+
   incrementKills: () => {
     set(state => ({
       enemiesKilled: state.enemiesKilled + 1,
     }));
   },
-  
+
   // Settings
   updateSettings: (newSettings) => {
     set(state => ({
