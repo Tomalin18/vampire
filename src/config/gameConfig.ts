@@ -1,346 +1,309 @@
-import { Character, Weapon, Enemy, Upgrade } from '../types';
-import { ASSETS } from './constants';
+import { EnemyType, WeaponType } from '../types/GameTypes';
 
-// Character Configurations
-export const CHARACTERS: Character[] = [
-  {
+export const GAME_CONFIG = {
+  // Screen
+  SCREEN_WIDTH: 400,
+  SCREEN_HEIGHT: 800,
+  
+  // Player
+  PLAYER_START_HEALTH: 100,
+  PLAYER_START_DAMAGE: 10,
+  PLAYER_START_SPEED: 150,
+  PLAYER_SIZE: 32,
+  
+  // Enemies
+  ENEMY_SPAWN_RATE: 2, // enemies per second
+  ENEMY_SPAWN_DISTANCE: 50, // pixels from screen edge
+  MAX_ENEMIES: 100,
+  
+  // Combat
+  PROJECTILE_SPEED: 300,
+  PROJECTILE_LIFETIME: 3000, // milliseconds
+  CRITICAL_CHANCE: 0.1, // 10%
+  CRITICAL_MULTIPLIER: 2.0,
+  
+  // Progression
+  BASE_XP_REQUIREMENT: 100,
+  XP_SCALING: 1.2, // multiplier per level
+  
+  // Difficulty Scaling
+  DIFFICULTY_SCALE_INTERVAL: 30000, // 30 seconds
+  HEALTH_SCALE_RATE: 0.1, // 10% increase
+  DAMAGE_SCALE_RATE: 0.05, // 5% increase
+  SPAWN_RATE_SCALE: 0.15, // 15% increase
+  
+  // Performance
+  TARGET_FPS: 60,
+  MAX_PROJECTILES: 50,
+  MAX_PARTICLES: 100,
+};
+
+export const ENEMY_CONFIG = {
+  zombie: {
+    health: 50,
+    damage: 10,
+    speed: 80,
+    xpValue: 10,
+    size: 24,
+    color: '#4a5568',
+    sprite: '🧟',
+    description: '基本殭屍 - 緩慢但持續追擊',
+  },
+  ghoul: {
+    health: 30,
+    damage: 15,
+    speed: 120,
+    xpValue: 15,
+    size: 20,
+    color: '#2d3748',
+    sprite: '👻',
+    description: '惡鬼 - 快速移動，血量較低',
+  },
+  brute: {
+    health: 150,
+    damage: 25,
+    speed: 50,
+    xpValue: 30,
+    size: 40,
+    color: '#744210',
+    sprite: '👹',
+    description: '蠻獸 - 高血量高攻擊，移動緩慢',
+  },
+  skeleton: {
+    health: 40,
+    damage: 12,
+    speed: 90,
+    xpValue: 20,
+    size: 22,
+    color: '#e2e8f0',
+    sprite: '💀',
+    description: '骷髏兵 - 平衡型敵人',
+  },
+  demon: {
+    health: 80,
+    damage: 20,
+    speed: 100,
+    xpValue: 25,
+    size: 30,
+    color: '#c53030',
+    sprite: '😈',
+    description: '惡魔 - 強力的中階敵人',
+  },
+  vampire: {
+    health: 300,
+    damage: 40,
+    speed: 70,
+    xpValue: 100,
+    size: 50,
+    color: '#702459',
+    sprite: '🧛',
+    description: 'BOSS - 吸血鬼領主',
+  },
+} as const;
+
+export const WEAPON_CONFIG = {
+  basicGun: {
+    id: 'basicGun',
+    name: '基礎手槍',
+    type: 'projectile' as WeaponType,
+    damage: 15,
+    attackSpeed: 2.0,
+    range: 200,
+    projectileSpeed: 400,
+    piercing: 0,
+    description: '基礎射擊武器',
+    sprite: '🔫',
+  },
+  shotgun: {
+    id: 'shotgun',
+    name: '霰彈槍',
+    type: 'projectile' as WeaponType,
+    damage: 25,
+    attackSpeed: 1.0,
+    range: 150,
+    projectileSpeed: 350,
+    piercing: 0,
+    description: '近距離強力武器，一次發射多發子彈',
+    sprite: '🔫',
+  },
+  sword: {
+    id: 'sword',
+    name: '旋轉劍',
+    type: 'melee' as WeaponType,
+    damage: 20,
+    attackSpeed: 3.0,
+    range: 80,
+    description: '圍繞角色旋轉的近戰武器',
+    sprite: '⚔️',
+  },
+  fireball: {
+    id: 'fireball',
+    name: '火球術',
+    type: 'projectile' as WeaponType,
+    damage: 30,
+    attackSpeed: 1.5,
+    range: 250,
+    projectileSpeed: 300,
+    piercing: 1,
+    area: 40,
+    description: '魔法火球，可穿透一個敵人並造成範圍傷害',
+    sprite: '🔥',
+  },
+  lightning: {
+    id: 'lightning',
+    name: '閃電鏈',
+    type: 'area' as WeaponType,
+    damage: 35,
+    attackSpeed: 2.5,
+    range: 180,
+    description: '電擊最近的敵人，可連鎖傳導',
+    sprite: '⚡',
+  },
+} as const;
+
+export const CHARACTER_CONFIG = {
+  warrior: {
     id: 'warrior',
     name: '戰士',
-    description: '近戰專家，擁有高血量和防禦力',
+    description: '平衡型角色，攻防兼備',
+    sprite: '⚔️',
     baseStats: {
       health: 120,
       damage: 12,
-      speed: 140,
-      attackSpeed: 1.2,
+      moveSpeed: 140,
+      attackSpeed: 1.0,
+      criticalChance: 0.05,
+      criticalMultiplier: 2.0,
     },
-    sprite: ASSETS.CHARACTERS.WARRIOR,
-    unlocked: true,
+    startingWeapon: 'basicGun',
   },
-  {
+  mage: {
     id: 'mage',
     name: '法師',
-    description: '遠程法術攻擊，高傷害但血量較低',
+    description: '高攻擊低血量，擅長魔法攻擊',
+    sprite: '🔮',
     baseStats: {
       health: 80,
       damage: 18,
-      speed: 130,
-      attackSpeed: 0.8,
+      moveSpeed: 130,
+      attackSpeed: 1.2,
+      criticalChance: 0.1,
+      criticalMultiplier: 2.5,
     },
-    sprite: ASSETS.CHARACTERS.MAGE,
-    unlocked: true,
+    startingWeapon: 'fireball',
   },
-  {
+  archer: {
     id: 'archer',
     name: '弓箭手',
-    description: '遠程物理攻擊，速度快且射程遠',
+    description: '遠程專家，攻擊速度快',
+    sprite: '🏹',
     baseStats: {
       health: 100,
-      damage: 15,
-      speed: 160,
-      attackSpeed: 1.5,
-    },
-    sprite: ASSETS.CHARACTERS.ARCHER,
-    unlocked: false,
-  },
-  {
-    id: 'rogue',
-    name: '盜賊',
-    description: '高速度和暴擊率的敏捷角色',
-    baseStats: {
-      health: 90,
       damage: 14,
-      speed: 180,
-      attackSpeed: 2.0,
+      moveSpeed: 160,
+      attackSpeed: 1.5,
+      criticalChance: 0.15,
+      criticalMultiplier: 1.8,
     },
-    sprite: ASSETS.CHARACTERS.ROGUE,
-    unlocked: false,
+    startingWeapon: 'basicGun',
   },
-];
+} as const;
 
-// Weapon Configurations
-export const WEAPONS: Weapon[] = [
-  {
-    id: 'sword',
-    name: '劍',
-    damage: 10,
-    attackSpeed: 1.0,
-    range: 60,
-    projectileSpeed: 0, // Melee weapon
-    projectileSprite: '',
-  },
-  {
-    id: 'fireball',
-    name: '火球術',
-    damage: 20,
-    attackSpeed: 0.7,
-    range: 150,
-    projectileSpeed: 250,
-    projectileSprite: ASSETS.WEAPONS.FIREBALL,
-  },
-  {
-    id: 'bow',
-    name: '弓',
-    damage: 12,
-    attackSpeed: 1.2,
-    range: 200,
-    projectileSpeed: 350,
-    projectileSprite: ASSETS.WEAPONS.ARROW,
-  },
-  {
-    id: 'dagger',
-    name: '匕首',
-    damage: 8,
-    attackSpeed: 2.5,
-    range: 50,
-    projectileSpeed: 400,
-    projectileSprite: ASSETS.WEAPONS.DAGGER,
-  },
-];
-
-// Enemy Configurations
-export const ENEMY_TYPES: Record<string, Enemy> = {
-  basic: {
-    id: 'basic',
-    type: 'basic',
-    health: 20,
-    damage: 5,
-    speed: 80,
-    reward: 10,
-    sprite: ASSETS.ENEMIES.BASIC,
-  },
-  fast: {
-    id: 'fast',
-    type: 'fast',
-    health: 15,
-    damage: 4,
-    speed: 120,
-    reward: 12,
-    sprite: ASSETS.ENEMIES.BASIC,
-  },
-  tank: {
-    id: 'tank',
-    type: 'tank',
-    health: 50,
-    damage: 8,
-    speed: 60,
-    reward: 25,
-    sprite: ASSETS.ENEMIES.ELITE,
-  },
-  elite: {
-    id: 'elite',
-    type: 'elite',
-    health: 40,
-    damage: 12,
-    speed: 100,
-    reward: 30,
-    sprite: ASSETS.ENEMIES.ELITE,
-  },
-  boss: {
-    id: 'boss',
-    type: 'boss',
-    health: 200,
-    damage: 20,
-    speed: 70,
-    reward: 100,
-    sprite: ASSETS.ENEMIES.BOSS,
-  },
+export const COLORS = {
+  primary: '#1a1a2e',
+  secondary: '#16213e',
+  accent: '#e94560',
+  success: '#0f3460',
+  warning: '#f39c12',
+  textPrimary: '#ffffff',
+  textSecondary: '#b0b3b8',
+  background: '#0a0a0a',
+  cardBackground: '#1e1e1e',
+  healthBar: '#e94560',
+  xpBar: '#f39c12',
+  manaBar: '#0f3460',
+  
+  // Enemy colors
+  enemyRed: '#c53030',
+  enemyOrange: '#dd6b20',
+  enemyPurple: '#702459',
+  
+  // UI colors
+  buttonPrimary: '#4CAF50',
+  buttonSecondary: '#2196F3',
+  buttonDanger: '#f44336',
+  
+  // Rarity colors
+  common: '#9ca3af',
+  rare: '#3b82f6',
+  epic: '#8b5cf6',
+  legendary: '#f59e0b',
 };
 
-// Upgrade Configurations
-export const UPGRADE_POOL: Upgrade[] = [
-  // Damage Upgrades
+export const UPGRADE_CONFIG = [
   {
     id: 'damage_boost',
-    name: '攻擊力提升',
-    description: '永久增加 20% 攻擊力',
-    icon: '⚔️',
+    name: '傷害提升',
+    description: '增加 20% 基礎傷害',
+    type: 'damage' as const,
+    rarity: 'common' as const,
     effect: {
-      type: 'stat',
+      type: 'stat' as const,
+      statType: 'damage',
       value: 0.2,
-      target: 'damage',
+      isPercentage: true,
+    },
+  },
+  {
+    id: 'health_boost',
+    name: '生命提升',
+    description: '增加 30 點最大生命值',
+    type: 'health' as const,
+    rarity: 'common' as const,
+    effect: {
+      type: 'stat' as const,
+      statType: 'health',
+      value: 30,
+      isPercentage: false,
+    },
+  },
+  {
+    id: 'speed_boost',
+    name: '移動速度',
+    description: '增加 15% 移動速度',
+    type: 'speed' as const,
+    rarity: 'common' as const,
+    effect: {
+      type: 'stat' as const,
+      statType: 'moveSpeed',
+      value: 0.15,
+      isPercentage: true,
+    },
+  },
+  {
+    id: 'attack_speed_boost',
+    name: '攻擊速度',
+    description: '增加 25% 攻擊速度',
+    type: 'attackSpeed' as const,
+    rarity: 'rare' as const,
+    effect: {
+      type: 'stat' as const,
+      statType: 'attackSpeed',
+      value: 0.25,
+      isPercentage: true,
     },
   },
   {
     id: 'critical_chance',
     name: '暴擊機率',
-    description: '增加 15% 暴擊機率',
-    icon: '💥',
+    description: '增加 5% 暴擊機率',
+    type: 'special' as const,
+    rarity: 'rare' as const,
     effect: {
-      type: 'stat',
-      value: 0.15,
-      target: 'criticalChance',
+      type: 'stat' as const,
+      statType: 'criticalChance',
+      value: 0.05,
+      isPercentage: false,
     },
   },
-  
-  // Speed Upgrades
-  {
-    id: 'movement_speed',
-    name: '移動速度',
-    description: '增加 25% 移動速度',
-    icon: '💨',
-    effect: {
-      type: 'stat',
-      value: 0.25,
-      target: 'speed',
-    },
-  },
-  {
-    id: 'attack_speed',
-    name: '攻擊速度',
-    description: '增加 30% 攻擊速度',
-    icon: '⚡',
-    effect: {
-      type: 'stat',
-      value: 0.3,
-      target: 'attackSpeed',
-    },
-  },
-  
-  // Health Upgrades
-  {
-    id: 'health_boost',
-    name: '生命力提升',
-    description: '增加 40 點最大生命值',
-    icon: '❤️',
-    effect: {
-      type: 'stat',
-      value: 40,
-      target: 'maxHealth',
-    },
-  },
-  {
-    id: 'health_regen',
-    name: '生命回復',
-    description: '每秒回復 2 點生命值',
-    icon: '💊',
-    effect: {
-      type: 'stat',
-      value: 2,
-      target: 'healthRegen',
-    },
-  },
-  
-  // Range Upgrades
-  {
-    id: 'attack_range',
-    name: '攻擊範圍',
-    description: '增加 20% 攻擊範圍',
-    icon: '🎯',
-    effect: {
-      type: 'stat',
-      value: 0.2,
-      target: 'range',
-    },
-  },
-  
-  // Special Abilities
-  {
-    id: 'double_shot',
-    name: '雙重射擊',
-    description: '每次攻擊發射兩個彈藥',
-    icon: '🏹',
-    effect: {
-      type: 'ability',
-      value: 1,
-      target: 'multiShot',
-    },
-  },
-  {
-    id: 'piercing_shot',
-    name: '穿透射擊',
-    description: '彈藥可以穿透敵人',
-    icon: '🔫',
-    effect: {
-      type: 'ability',
-      value: 1,
-      target: 'piercing',
-    },
-  },
-  {
-    id: 'explosive_shot',
-    name: '爆炸射擊',
-    description: '彈藥命中時產生範圍傷害',
-    icon: '💣',
-    effect: {
-      type: 'ability',
-      value: 50,
-      target: 'explosiveRadius',
-    },
-  },
-];
-
-// Wave Configuration
-export const WAVE_CONFIG = {
-  // Wave composition by wave number
-  getWaveComposition: (waveNumber: number) => {
-    const baseEnemies = Math.floor(5 + waveNumber * 1.5);
-    const composition: Array<{ type: string; count: number }> = [];
-    
-    // Basic enemies always present
-    composition.push({ type: 'basic', count: Math.floor(baseEnemies * 0.6) });
-    
-    // Add fast enemies from wave 2
-    if (waveNumber >= 2) {
-      composition.push({ type: 'fast', count: Math.floor(baseEnemies * 0.2) });
-    }
-    
-    // Add tank enemies from wave 3
-    if (waveNumber >= 3) {
-      composition.push({ type: 'tank', count: Math.floor(baseEnemies * 0.1) });
-    }
-    
-    // Add elite enemies from wave 5
-    if (waveNumber >= 5) {
-      composition.push({ type: 'elite', count: Math.floor(baseEnemies * 0.1) });
-    }
-    
-    // Boss waves every 5 waves
-    if (waveNumber % 5 === 0) {
-      composition.push({ type: 'boss', count: 1 });
-    }
-    
-    return composition;
-  },
-  
-  // Scaling factors
-  healthScaling: (waveNumber: number) => 1 + (waveNumber - 1) * 0.15,
-  damageScaling: (waveNumber: number) => 1 + (waveNumber - 1) * 0.12,
-  speedScaling: (waveNumber: number) => Math.min(1 + (waveNumber - 1) * 0.05, 1.5),
-  rewardScaling: (waveNumber: number) => 1 + (waveNumber - 1) * 0.1,
-};
-
-// Experience Configuration
-export const EXP_CONFIG = {
-  // Experience required for each level
-  getExpForLevel: (level: number): number => {
-    return Math.floor(100 * Math.pow(1.2, level - 1));
-  },
-  
-  // Experience gained from enemies
-  getExpFromEnemy: (enemyType: string, waveNumber: number): number => {
-    const baseExp = ENEMY_TYPES[enemyType]?.reward || 10;
-    return Math.floor(baseExp * (1 + waveNumber * 0.1));
-  },
-};
-
-// Difficulty Configuration
-export const DIFFICULTY_CONFIG = {
-  easy: {
-    playerDamageMultiplier: 1.2,
-    enemyHealthMultiplier: 0.8,
-    enemyDamageMultiplier: 0.8,
-    expMultiplier: 1.2,
-  },
-  normal: {
-    playerDamageMultiplier: 1.0,
-    enemyHealthMultiplier: 1.0,
-    enemyDamageMultiplier: 1.0,
-    expMultiplier: 1.0,
-  },
-  hard: {
-    playerDamageMultiplier: 0.8,
-    enemyHealthMultiplier: 1.3,
-    enemyDamageMultiplier: 1.2,
-    expMultiplier: 1.5,
-  },
-}; 
+] as const; 

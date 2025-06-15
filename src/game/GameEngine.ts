@@ -1,12 +1,21 @@
-import { Entity, Component, System } from '../types/GameTypes';
+import { Entity, Vector2 } from '../types/GameTypes';
+import { GAME_CONFIG } from '../config/gameConfig';
+
+export interface System {
+  priority: number;
+  update(entities: Map<string, Entity>, deltaTime: number): void;
+}
 
 export class GameEngine {
   private entities: Map<string, Entity> = new Map();
   private systems: System[] = [];
-  private isRunning = false;
-  private lastTime = 0;
-  private deltaTime = 0;
-  
+  private isRunning: boolean = false;
+  private lastTime: number = 0;
+  private deltaTime: number = 0;
+  private frameCount: number = 0;
+  private fps: number = 0;
+  private fpsUpdateTime: number = 0;
+
   constructor() {
     this.lastTime = performance.now();
   }
@@ -24,20 +33,19 @@ export class GameEngine {
     return this.entities.get(id);
   }
 
-  getEntitiesWithComponent<T extends Component>(componentType: string): Entity[] {
-    return Array.from(this.entities.values()).filter(entity => 
-      entity.components[componentType] !== undefined
-    );
+  getEntities(): Map<string, Entity> {
+    return this.entities;
   }
 
-  getAllEntities(): Entity[] {
-    return Array.from(this.entities.values());
+  clearEntities(): void {
+    this.entities.clear();
   }
 
   // System Management
   addSystem(system: System): void {
     this.systems.push(system);
-    this.systems.sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    // Sort systems by priority (lower numbers run first)
+    this.systems.sort((a, b) => a.priority - b.priority);
   }
 
   removeSystem(system: System): void {
@@ -58,36 +66,63 @@ export class GameEngine {
     this.isRunning = false;
   }
 
+  pause(): void {
+    this.isRunning = false;
+  }
+
+  resume(): void {
+    if (!this.isRunning) {
+      this.isRunning = true;
+      this.lastTime = performance.now();
+      this.gameLoop();
+    }
+  }
+
   private gameLoop = (): void => {
     if (!this.isRunning) return;
 
     const currentTime = performance.now();
-    this.deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.016); // Cap at ~60fps
+    this.deltaTime = (currentTime - this.lastTime) / 1000; // Convert to seconds
     this.lastTime = currentTime;
 
-    this.update(this.deltaTime);
-    
+    // Cap delta time to prevent large jumps
+    this.deltaTime = Math.min(this.deltaTime, 1 / 30); // Maximum 30 FPS minimum
+
+    // Update FPS counter
+    this.updateFPS(currentTime);
+
+    // Update all systems
+    this.systems.forEach(system => {
+      system.update(this.entities, this.deltaTime);
+    });
+
+    // Clean up destroyed entities
+    this.cleanupEntities();
+
+    // Continue the game loop
     requestAnimationFrame(this.gameLoop);
   };
 
-  private update(deltaTime: number): void {
-    // Update all systems
-    for (const system of this.systems) {
-      if (system.enabled !== false) {
-        system.update(this.entities, deltaTime);
-      }
+  private updateFPS(currentTime: number): void {
+    this.frameCount++;
+    if (currentTime - this.fpsUpdateTime >= 1000) {
+      this.fps = this.frameCount;
+      this.frameCount = 0;
+      this.fpsUpdateTime = currentTime;
     }
-
-    // Clean up destroyed entities
-    this.cleanupDestroyedEntities();
   }
 
-  private cleanupDestroyedEntities(): void {
-    for (const [id, entity] of this.entities) {
-      if (entity.destroyed) {
-        this.entities.delete(id);
+  private cleanupEntities(): void {
+    const toRemove: string[] = [];
+    
+    this.entities.forEach((entity, id) => {
+      // Check if entity is marked for destruction
+      if ((entity as any).destroyed) {
+        toRemove.push(id);
       }
-    }
+    });
+
+    toRemove.forEach(id => this.removeEntity(id));
   }
 
   // Utility Methods
@@ -95,23 +130,75 @@ export class GameEngine {
     return this.deltaTime;
   }
 
+  getFPS(): number {
+    return this.fps;
+  }
+
+  isRunningState(): boolean {
+    return this.isRunning;
+  }
+
   getEntityCount(): number {
     return this.entities.size;
   }
 
-  clearAllEntities(): void {
-    this.entities.clear();
+  // Helper methods for common operations
+  findEntitiesWithComponent(componentType: string): Entity[] {
+    const result: Entity[] = [];
+    this.entities.forEach(entity => {
+      if (entity.components.has(componentType)) {
+        result.push(entity);
+      }
+    });
+    return result;
   }
 
-  pause(): void {
-    this.isRunning = false;
+  findNearbyEntities(position: Vector2, radius: number, excludeId?: string): Entity[] {
+    const result: Entity[] = [];
+    
+    this.entities.forEach(entity => {
+      if (excludeId && entity.id === excludeId) return;
+      
+      const transform = entity.components.get('transform');
+      if (transform) {
+        const dx = (transform as any).x - position.x;
+        const dy = (transform as any).y - position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance <= radius) {
+          result.push(entity);
+        }
+      }
+    });
+    
+    return result;
   }
 
-  resume(): void {
-    if (!this.isRunning) {
-      this.lastTime = performance.now();
-      this.start();
-    }
+  // Collision detection helper
+  checkCollision(entity1: Entity, entity2: Entity): boolean {
+    const transform1 = entity1.components.get('transform') as any;
+    const transform2 = entity2.components.get('transform') as any;
+    const render1 = entity1.components.get('render') as any;
+    const render2 = entity2.components.get('render') as any;
+
+    if (!transform1 || !transform2 || !render1 || !render2) return false;
+
+    const dx = transform1.x - transform2.x;
+    const dy = transform1.y - transform2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const minDistance = (render1.size + render2.size) / 2;
+
+    return distance < minDistance;
+  }
+
+  // Performance monitoring
+  getPerformanceStats() {
+    return {
+      fps: this.fps,
+      entityCount: this.entities.size,
+      systemCount: this.systems.length,
+      deltaTime: this.deltaTime,
+    };
   }
 }
 

@@ -3,86 +3,53 @@ export interface Vector2 {
   y: number;
 }
 
+export interface Entity {
+  id: string;
+  components: Map<string, Component>;
+}
+
 export interface Component {
-  [key: string]: any;
+  type: string;
 }
 
-export interface TransformComponent extends Component {
-  position: Vector2;
+export interface Transform extends Component {
+  type: 'transform';
+  x: number;
+  y: number;
   rotation: number;
-  scale: Vector2;
+  scale: number;
 }
 
-export interface HealthComponent extends Component {
+export interface Health extends Component {
+  type: 'health';
   current: number;
   max: number;
 }
 
-export interface MovementComponent extends Component {
+export interface Movement extends Component {
+  type: 'movement';
   velocity: Vector2;
   speed: number;
   target?: Vector2;
 }
 
-export interface CombatComponent extends Component {
+export interface Combat extends Component {
+  type: 'combat';
   damage: number;
   attackSpeed: number;
   range: number;
-  lastAttackTime: number;
-  targets: string[];
+  lastAttack: number;
 }
 
-export interface RenderComponent extends Component {
+export interface Render extends Component {
+  type: 'render';
   sprite: string;
-  width: number;
-  height: number;
-  color?: string;
-  opacity?: number;
+  color: string;
+  size: number;
 }
 
-export interface CollisionComponent extends Component {
-  radius: number;
-  layer: string;
-  mask: string[];
-}
-
-export interface PlayerComponent extends Component {
-  level: number;
-  experience: number;
-  experienceToNext: number;
-}
-
-export interface EnemyComponent extends Component {
-  type: string;
-  reward: number;
-  aiType: 'chase' | 'patrol' | 'ranged';
-}
-
-export interface ProjectileComponent extends Component {
-  damage: number;
-  speed: number;
-  lifetime: number;
-  penetration: number;
-  ownerId: string;
-}
-
-export interface Entity {
+export interface Player {
   id: string;
-  components: { [key: string]: Component };
-  destroyed?: boolean;
-  tags?: string[];
-}
-
-export interface System {
-  priority?: number;
-  enabled?: boolean;
-  update(entities: Map<string, Entity>, deltaTime: number): void;
-}
-
-// Game State Types
-export type GameState = 'menu' | 'playing' | 'paused' | 'gameOver' | 'levelUp';
-
-export interface PlayerState {
   level: number;
   experience: number;
   experienceToNext: number;
@@ -91,94 +58,97 @@ export interface PlayerState {
   position: Vector2;
   stats: {
     damage: number;
-    speed: number;
     attackSpeed: number;
-    range: number;
-  };
-  weapons: string[];
-  upgrades: string[];
-}
-
-export interface GameSession {
-  startTime: number;
-  currentWave: number;
-  enemiesDefeated: number;
-  survivalTime: number;
-  score: number;
-  level: number;
-}
-
-export interface PlayerProgress {
-  totalGamesPlayed: number;
-  bestSurvivalTime: number;
-  highScore: number;
-  totalEnemiesDefeated: number;
-  unlockedCharacters: string[];
-  currency: number;
-  achievements: string[];
-}
-
-export interface GameSettings {
-  audio: {
-    masterVolume: number;
-    sfxVolume: number;
-    musicVolume: number;
-    enabled: boolean;
-  };
-  graphics: {
-    quality: 'low' | 'medium' | 'high';
-    showFPS: boolean;
-    particleEffects: boolean;
-  };
-  gameplay: {
-    autoPause: boolean;
-    vibration: boolean;
-    controlSensitivity: number;
-  };
-}
-
-export interface Character {
-  id: string;
-  name: string;
-  description: string;
-  baseStats: {
+    moveSpeed: number;
     health: number;
-    damage: number;
-    speed: number;
-    attackSpeed: number;
+    criticalChance: number;
+    criticalMultiplier: number;
   };
-  sprite: string;
-  unlocked: boolean;
+}
+
+export interface Enemy {
+  id: string;
+  type: EnemyType;
+  health: number;
+  maxHealth: number;
+  position: Vector2;
+  velocity: Vector2;
+  damage: number;
+  speed: number;
+  xpValue: number;
+  size: number;
 }
 
 export interface Weapon {
   id: string;
   name: string;
+  type: WeaponType;
+  level: number;
   damage: number;
   attackSpeed: number;
   range: number;
-  projectileSpeed: number;
-  projectileSprite: string;
+  projectileSpeed?: number;
+  piercing?: number;
+  area?: number;
+  description: string;
 }
 
-export interface Enemy {
+export interface Projectile {
   id: string;
-  type: string;
-  health: number;
+  position: Vector2;
+  velocity: Vector2;
   damage: number;
-  speed: number;
-  reward: number;
-  sprite: string;
+  lifetime: number;
+  piercing: number;
+  size: number;
+  ownerId: string;
 }
 
 export interface Upgrade {
   id: string;
   name: string;
   description: string;
-  icon: string;
-  effect: {
-    type: 'stat' | 'ability' | 'weapon';
-    value: number;
-    target: string;
+  type: UpgradeType;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  effect: UpgradeEffect;
+}
+
+export interface UpgradeEffect {
+  type: 'weapon' | 'stat' | 'passive';
+  weaponId?: string;
+  statType?: string;
+  value: number;
+  isPercentage?: boolean;
+}
+
+export type EnemyType = 'zombie' | 'ghoul' | 'brute' | 'skeleton' | 'demon' | 'vampire';
+export type WeaponType = 'projectile' | 'melee' | 'area' | 'passive';
+export type UpgradeType = 'weapon' | 'damage' | 'health' | 'speed' | 'attackSpeed' | 'special';
+
+export interface GameState {
+  gameState: 'menu' | 'playing' | 'paused' | 'levelUp' | 'gameOver';
+  player: Player;
+  currentWave: number;
+  survivalTime: number;
+  enemiesKilled: number;
+  score: number;
+  activeWeapons: Weapon[];
+  availableUpgrades: Upgrade[];
+  settings: {
+    soundEnabled: boolean;
+    musicEnabled: boolean;
+    vibrationEnabled: boolean;
+    graphics: 'low' | 'medium' | 'high';
+  };
+}
+
+export interface InputState {
+  touch: {
+    isPressed: boolean;
+    position: Vector2;
+  };
+  gestures: {
+    tap?: Vector2;
+    drag?: Vector2;
   };
 } 
